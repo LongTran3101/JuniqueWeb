@@ -8,16 +8,18 @@ import LoadingOverlay from './context/ComponentsUntil/LoadingOverlay';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+
+    <BrowserRouter>
+      <AuthProvider>
         <Layout>
           <LoadingProvider>
             <LoadingOverlay />
             <AppRoutes />
           </LoadingProvider>
         </Layout>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
+
   );
 };
 

@@ -36,14 +36,17 @@ const Login: React.FC = () => {
         try {
             const res = await axios.post('http://localhost:8080/api/auth/login', { username, password });
             const { accessToken, userEntity } = res.data;
-            const token = accessToken;
-            const User:User ={
-                email:userEntity.username,
+            const User: User = {
+                email: userEntity.username,
                 username: userEntity.username,
-                role:"admin",
-            
+                role: "admin",
+
             }
-            login(token,User);
+            const payloadBase64 = accessToken.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payloadBase64));
+            const exp = decodedPayload.exp * 1000; // milliseconds
+
+            login(accessToken, User, exp); // Truyền thêm `exp`
             navigate('/dashboard'); // hoặc điều hướng khác 
         } catch (err) {
             alert('Login failed');

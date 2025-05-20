@@ -60,7 +60,7 @@ const DesignTable: React.FC<Props> = React.memo(({
     onDelete,
     columns,
 }) => {
-    console.log('DesignTable : on mount' );
+    console.log('DesignTable : on mount');
     const [sortConfig, setSortConfig] = React.useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
     const handleSort = (key: string) => {
@@ -136,14 +136,14 @@ const DesignTable: React.FC<Props> = React.memo(({
                                             {(page - 1) * pageSize + index + 1}
                                         </TableCell>
                                     );
-                                } else {
-                                    const value = (row as any)[col.id];
-                                    return (
-                                        <TableCell key={col.id} align={col.align ?? "left"}>
-                                            {value}
-                                        </TableCell>
-                                    );
-                                }
+                                } return (
+                                    <TableCell key={col.id} align={col.align ?? "left"}>
+                                        {col.render
+                                            ? col.render(row, { onView, onEdit, onDelete })
+                                            : (row as any)[col.id]
+                                        }
+                                    </TableCell>
+                                );
                             })}
                         </TableRow>
                     ))}

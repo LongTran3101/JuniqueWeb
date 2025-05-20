@@ -12,7 +12,7 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { useAuth } from '../context/AuthContext';
 
 const Topbar = () => {
-    const { isAuthenticated,userInfo } = useAuth();
+    const { isAuthenticated,user } = useAuth();
     return isAuthenticated ? (  // Only render if authenticated
         <AppBar position="fixed" elevation={0} sx={{ ml: 240, bgcolor: '#fff', color: '#333', zIndex: 1201 }}>
             <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -43,8 +43,8 @@ const Topbar = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar src="https://i.pravatar.cc/40" />
                         <Box>
-                            <Typography variant="body2">{userInfo?.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">{userInfo?.role}</Typography>
+                            <Typography variant="body2">{user?.email}</Typography>
+                            <Typography variant="caption" color="text.secondary">{user?.role}</Typography>
                         </Box>
                     </Box>
                 </Box>

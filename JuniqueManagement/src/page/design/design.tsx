@@ -6,8 +6,8 @@ import PaginationBar from "./PaginationBar";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import axios from "axios";
 import { useLoading } from "../../context/LoadingContext";
+import axiosInstance from "../../components/api/axios";
 
 const pageSize = 10;
 
@@ -25,7 +25,38 @@ const Design: React.FC = () => {
         { id: "id", label: "ID", sortable: true },
         { id: "username", label: "Username", sortable: true },
         { id: "email", label: "Email", sortable: true },
-        { id: "enabled", label: "Status", sortable: true },
+        {
+            id: "status",
+            label: "Status",
+            sortable: true,
+            render: (row: any) => {
+                console.log("row.status =", row.status, "typeof:", typeof row.status);
+                const status = Number(row.status);
+                let color: "success" | "warning" | "error" | "textSecondary" = "textSecondary";
+                let text = "Unknown";
+
+                switch (status) {
+                    case 0:
+                        color = "warning";
+                        text = "Deactive";
+                        break;
+                    case 1:
+                        color = "success";
+                        text = "Active";
+                        break;
+                    case 2:
+                        color = "error";
+                        text = "Deleted";
+                        break;
+                }
+
+                return (
+                    <Typography variant="body2" fontWeight="bold" color={color}>
+                        {text}
+                    </Typography>
+                );
+            }
+        },
         {
             id: "actions",
             label: "Actions",
@@ -69,7 +100,7 @@ const Design: React.FC = () => {
                 size: pageSize,
                 ...filteredParams,
             };
-            const response = await axios.get("http://localhost:8080/api/users", { params });
+            const response = await axiosInstance.get("http://localhost:8080/api/users", { params });
             setData(response.data.content);
             setTotalElements(response.data.totalElements);
             setTotalPages(response.data.totalPages);

@@ -5,9 +5,9 @@ import App from './App.tsx'
 import theme from './layout/theme.ts'
 import { ThemeProvider } from '@mui/material'
 createRoot(document.getElementById('root')!).render(
-  // <StrictMode>
+  <>
     <ThemeProvider theme={theme}>
       <App />
     </ThemeProvider>
-  // </StrictMode>,
+  </>
 )
