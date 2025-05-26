@@ -2,7 +2,6 @@
 import {
     Box,
     Card,
-    CardContent,
     Typography,
     Grid,
     IconButton,
@@ -73,8 +72,8 @@ const YourDesigns = () => {
             </Typography>
             <Divider></Divider>
             <Grid container spacing={2} size={12} >
-                {mockDesigns.map((design, index) => (
-                    <Grid item size={3} key={design.id} paddingTop={2}>
+                {mockDesigns.map((design) => (
+                    <Grid size={3} key={design.id} paddingTop={2}>
                         <Card sx={{ display: 'flex', alignItems: 'center', p: 2, height: '100%',padding:1,border:1,borderRadius: 8, }}>
                             <Box
                                 component="img"
@@ -91,7 +90,7 @@ const YourDesigns = () => {
                                 </Typography>
 
                                 <Grid container spacing={2} mt={1}>
-                                    <Grid item xs={6}>
+                                    <Grid  size={6}>
                                         <Box display="flex" alignItems="center">
                                             <ShoppingCartIcon fontSize="small" />
                                             <Typography ml={1} variant="body2">
@@ -99,7 +98,7 @@ const YourDesigns = () => {
                                             </Typography>
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
+                                    <Grid size={6}>
                                         <Box display="flex" alignItems="center">
                                             <FavoriteBorderIcon fontSize="small" />
                                             <Typography ml={1} variant="body2">

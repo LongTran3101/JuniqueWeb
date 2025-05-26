@@ -18,7 +18,7 @@ const SummaryCard = ({ title, subtitle, value, color }: { title: string; subtitl
 
 const DashboardSummary = () => {
     return (
-        <Box sx={{ mt: 4 }}>
+        <Box >
             <Typography variant="h4" fontWeight="bold" mb={1}>
                 Dashboard
             </Typography>
@@ -29,30 +29,30 @@ const DashboardSummary = () => {
             <Box display="flex" justifyContent="center">
                 <Grid container spacing={3} >
                     {/* Sales */}
-                    <Grid item xs={12} md={6} lg={3}>
+                    <Grid size={3}>
                         <Typography variant="subtitle1" fontWeight="bold" color="purple" mb={1}>
                             🛒 Sales
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid item xs={6}>
+                            <Grid  size={6}>
                                 <SummaryCard title="Ongoing month" subtitle="01/05 - 13/05" value={0} color="purple" />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid  size={6}>
                                 <SummaryCard title="All-time" subtitle="" value={0} color="purple" />
                             </Grid>
                         </Grid>
                     </Grid>
 
                     {/* Saves */}
-                    <Grid item xs={12} md={6} lg={3}>
+                    <Grid size={3}>
                         <Typography variant="subtitle1" fontWeight="bold" color="black" mb={1}>
                             ❤️ Saves
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid item xs={6}>
+                            <Grid  size={6}>
                                 <SummaryCard title="Ongoing month" subtitle="01/05 - 13/05" value={0} color="black" />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid  size={6}>
                                 <SummaryCard title="All-time" subtitle="" value={0} color="black" />
                             </Grid>
                         </Grid>

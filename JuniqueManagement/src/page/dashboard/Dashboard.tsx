@@ -5,7 +5,7 @@ import YourDesigns from './YourDesigns';
 import LastSales from './LastSales';
 const Dashboard: React.FC = () => {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box >
       <DashboardSummary />
       {/* các phần khác của dashboard */}
       <YourDesigns/>

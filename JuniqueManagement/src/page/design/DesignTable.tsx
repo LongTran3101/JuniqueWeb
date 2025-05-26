@@ -6,10 +6,8 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    IconButton,
     Paper,
     Checkbox,
-    Tooltip,
 } from "@mui/material";
 import TableSortLabel from "@mui/material/TableSortLabel";
 
@@ -24,6 +22,20 @@ interface DesignData {
     createdDate: string;
     updatedDate: string;
 }
+interface ColumnConfig {
+    id: string;
+    label: string;
+    sortable: boolean;
+    align?: "left" | "right" | "center";
+    render?: (
+        row: DesignData,
+        handlers?: {
+            onView: (row: DesignData) => void;
+            onEdit: (row: DesignData) => void;
+            onDelete: (row: DesignData) => void;
+        }
+    ) => React.ReactNode;
+}
 
 interface Props {
     data: DesignData[];
@@ -35,17 +47,7 @@ interface Props {
     onView: (row: any) => void;
     onEdit: (row: any) => void;
     onDelete: (row: any) => void;
-    columns: {
-        id: string;
-        label: string;
-        sortable: boolean;
-        align?: "left" | "right" | "center";
-        render?: (row: DesignData, handlers: {
-            onView: (row: DesignData) => void;
-            onEdit: (row: DesignData) => void;
-            onDelete: (row: DesignData) => void;
-        }) => React.ReactNode;
-    }[];
+    columns: ColumnConfig[];
 }
 
 const DesignTable: React.FC<Props> = React.memo(({
@@ -70,21 +72,32 @@ const DesignTable: React.FC<Props> = React.memo(({
                 : { key, direction: "asc" }
         );
     };
-    const sortedData = React.useMemo(() => {
+    const sortedData = React.useMemo<DesignData[]>(() => {
         if (!sortConfig) return data;
 
         return [...data].sort((a, b) => {
-            const aVal = a[sortConfig.key];
-            const bVal = b[sortConfig.key];
+            const aVal = a[sortConfig.key as keyof DesignData];
+            const bVal = b[sortConfig.key as keyof DesignData];
 
-            if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-            if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+            if (aVal === undefined || bVal === undefined) return 0;
+
+            // So sánh dạng string để tránh lỗi với Date, số, v.v.
+            const aStr = String(aVal).toLowerCase();
+            const bStr = String(bVal).toLowerCase();
+
+            if (aStr < bStr) return sortConfig.direction === "asc" ? -1 : 1;
+            if (aStr > bStr) return sortConfig.direction === "asc" ? 1 : -1;
             return 0;
         });
     }, [data, sortConfig]);
-    const allChecked = data.length > 0 && data.every(row => selectedIds.includes(row.id));
-    const someChecked = data.some(row => selectedIds.includes(row.id));
 
+    const allChecked = React.useMemo(() => {
+        return data.length > 0 && data.every(row => selectedIds.includes(row.id));
+    }, [data, selectedIds]);
+
+    const someChecked = React.useMemo(() => {
+        return data.some(row => selectedIds.includes(row.id)) && !allChecked;
+    }, [data, selectedIds, allChecked]);
     return (
         <TableContainer component={Paper}>
             <Table>
@@ -92,8 +105,8 @@ const DesignTable: React.FC<Props> = React.memo(({
                     <TableRow>
                         <TableCell padding="checkbox">
                             <Checkbox
-                                checked={data.length > 0 && data.every(row => selectedIds.includes(row.id))}
-                                indeterminate={data.some(row => selectedIds.includes(row.id)) && !data.every(row => selectedIds.includes(row.id))}
+                                checked={allChecked}
+                                indeterminate={someChecked}
                                 onChange={(e) => onSelectAllChange(e.target.checked)}
                             />
                         </TableCell>

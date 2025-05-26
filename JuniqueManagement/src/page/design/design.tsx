@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import FilterForm from "./FilterForm";
 import DesignTable from "./DesignTable";
 import PaginationBar from "./PaginationBar";
@@ -8,86 +8,97 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../context/LoadingContext";
 import axiosInstance from "../../components/api/axios";
+import EditDialog from "./EditDialog";
+import { useNotification } from "../../context/NotificationProvider";
 
 const pageSize = 10;
 
 const Design: React.FC = () => {
     const [appliedFilters, setAppliedFilters] = useState({}); // thêm state này
     const [page, setPage] = useState(1);
-
+    const { showNotification } = useNotification();
     // Dữ liệu API trả về:
     const [data, setData] = useState<any[]>([]);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const { setLoading } = useLoading();
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editData, setEditData] = useState<any>(null);
 
-    const designTableColumns = [
+    const designTableColumns = useMemo(() => [
         { id: "id", label: "ID", sortable: true },
         { id: "username", label: "Username", sortable: true },
         { id: "email", label: "Email", sortable: true },
         {
-            id: "status",
-            label: "Status",
+            id: "vipExpiredAt",
+            label: "Thời hạn vip",
             sortable: true,
             render: (row: any) => {
-                console.log("row.status =", row.status, "typeof:", typeof row.status);
-                const status = Number(row.status);
+                if (!row.vipExpiredAt) return "";
+
+                const date = new Date(row.vipExpiredAt);
+                const formatted = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+                    .toString()
+                    .padStart(2, "0")}/${date.getFullYear()}`;
+                return formatted;
+            },
+        },
+
+        {
+            id: "enabled",
+            label: "enabled",
+            sortable: true,
+            render: (row: any) => {
                 let color: "success" | "warning" | "error" | "textSecondary" = "textSecondary";
                 let text = "Unknown";
-
-                switch (status) {
-                    case 0:
-                        color = "warning";
-                        text = "Deactive";
-                        break;
-                    case 1:
-                        color = "success";
-                        text = "Active";
-                        break;
-                    case 2:
-                        color = "error";
-                        text = "Deleted";
-                        break;
+                let enabled = row.enabled;
+                if (enabled == false) {
+                    color = "warning";
+                    text = "Deactive";
+                } else {
+                    color = "success";
+                    text = "Active";
                 }
-
                 return (
                     <Typography variant="body2" fontWeight="bold" color={color}>
                         {text}
                     </Typography>
                 );
-            }
+            },
         },
+        { id: "createdBy", label: "Created By", sortable: true },
         {
             id: "actions",
             label: "Actions",
             sortable: false,
-            align: "center",
+            align: "center" as "center",
             render: (row: any, handlers: any) => (
                 <>
-                    <Tooltip title="View">
-                        <IconButton onClick={() => handlers.onView(row)}>
+                    {/* <Tooltip title="View">
+                        <IconButton onClick={() => handlers?.onView(row)}>
                             <VisibilityIcon fontSize="small" />
                         </IconButton>
-                    </Tooltip>
+                    </Tooltip> */}
                     <Tooltip title="Edit">
-                        <IconButton onClick={() => handlers.onEdit(row)}>
+                        <IconButton onClick={() => handlers?.onEdit(row)}>
                             <EditIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton onClick={() => handlers.onDelete(row)} color="error">
+                    {/* <Tooltip title="Delete">
+                        <IconButton onClick={() => handlers?.onDelete(row)} color="error">
                             <DeleteIcon fontSize="small" />
                         </IconButton>
-                    </Tooltip>
+                    </Tooltip> */}
                 </>
             ),
         },
-    ];
+    ], []);
     console.log('Desing : on mount');
     // Lấy data từ API, thêm params trang và lọc (có thể mở rộng filter param)
     const fetchData = async () => {
         setLoading(true);
         try {
+            console.log(appliedFilters, "   appliedFilters  ");
             const filteredParams = Object.entries(appliedFilters).reduce((acc, [key, value]) => {
                 if (value !== "" && value !== null && value !== undefined) {
                     acc[key] = value;
@@ -139,6 +150,8 @@ const Design: React.FC = () => {
 
     const handleEdit = useCallback((rowData: any) => {
         console.log("Edit data: ", rowData);
+        setEditData(rowData);
+        setEditDialogOpen(true);
     }, []);
 
 
@@ -146,6 +159,26 @@ const Design: React.FC = () => {
         setAppliedFilters({ ...filters });
         setPage(1);
     }, []);
+    const handleSaveEdit = async (updatedData: any) => {
+        setLoading(true);
+        try {
+            // Gọi API update user
+            const res = await axiosInstance.put(`http://localhost:8080/api/users/${updatedData.id}`, updatedData);
+            if (res.data.code == "SUCCESS") {
+                showNotification("Cập nhật thành công", "success");
+                fetchData();
+                setEditDialogOpen(false);
+            } else {
+                showNotification("Cập nhật thất bại", "error");
+            }
+            // Reload data lại từ API
+
+        } catch (error) {
+            showNotification("Cập nhật thất bại do lỗi hệ thống", "error");
+            // Có thể show toast lỗi
+        }
+        setLoading(false);
+    };
 
     return (
         <Box p={3}>
@@ -162,14 +195,18 @@ const Design: React.FC = () => {
                 selectedIds={selectedIds}
                 onSelectChange={handleSelectChange}
                 onSelectAllChange={handleSelectAllChange}
-                onView={null}
+                onView={() => { }}
                 onEdit={handleEdit}
-                onDelete={null}
-                // onSort={handleSort}  <== xóa
-                // sortConfig={sortConfig}  <== xóa
+                onDelete={() => { }}
                 columns={designTableColumns}
             />
             <PaginationBar page={page} count={totalPages} onChange={handlePageChange} />
+            <EditDialog
+                open={editDialogOpen}
+                data={editData}
+                onClose={() => setEditDialogOpen(false)}
+                onSave={handleSaveEdit}
+            />
         </Box>
     );
 };

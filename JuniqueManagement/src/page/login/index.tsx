@@ -1,114 +1,199 @@
 import React, { useState } from 'react';
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  CircularProgress,
+  Box,
+  Grid,
+  Link,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, type User } from '../../context/AuthContext';
-import { TextField, Button, Container, Typography, CircularProgress, Box, Grid } from '@mui/material';
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup';
 import axios from '../../components/api/axios';
+
 interface UserEntity {
-    id: number;
-    username: string;
-    email: string;
-    enabled: boolean;
-    createdBy: string;
-    createdAt: string;
-    updatedAt: string;
-    lastLogin: string | null;
-    vipExpiredAt: string;
-    refreshToken: string | null;
+  id: number;
+  username: string;
+  email: string;
+  enabled: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  lastLogin: string | null;
+  vipExpiredAt: string;
+  refreshToken: string | null;
+  role:string;
 }
 
 interface LoginResponse {
-    accessToken: string;
-    userEntity: UserEntity;
+  accessToken: string;
+  userEntity: UserEntity;
 }
+
 const Login: React.FC = () => {
-    const { login } = useAuth();
-    const navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+  const toggleMode = () => {
+    setMode((prev) => (prev === 'login' ? 'register' : 'login'));
+    setError('');
+  };
 
-        try {
-            const res = await axios.post('http://localhost:8080/api/auth/login', { username, password });
-            const { accessToken, userEntity } = res.data;
-            const User: User = {
-                email: userEntity.username,
-                username: userEntity.username,
-                role: "admin",
+  const validationSchema = Yup.object().shape({
+    username: Yup.string().required('Tên đăng nhập là bắt buộc'),
+    password: Yup.string()
+      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+      .required('Mật khẩu là bắt buộc'),
+    email:
+      mode === 'register'
+        ? Yup.string().email('Email không hợp lệ').required('Email là bắt buộc')
+        : Yup.string().notRequired(),
+  });
 
-            }
-            const payloadBase64 = accessToken.split('.')[1];
-            const decodedPayload = JSON.parse(atob(payloadBase64));
-            const exp = decodedPayload.exp * 1000; // milliseconds
+  const initialValues = {
+    username: '',
+    password: '',
+    email: '',
+  };
 
-            login(accessToken, User, exp); // Truyền thêm `exp`
-            navigate('/dashboard'); // hoặc điều hướng khác 
-        } catch (err) {
-            alert('Login failed');
-        }
-        setLoading(false);
-    };
-    return (
-        <>
-            <Grid size={12}>
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    minHeight="100vh" // Make the container take at least the full viewport height
-                    bgcolor="#f0f2f5" // Optional: Add a background color
+  const handleSubmit = async (values: typeof initialValues, { setSubmitting }: any) => {
+    setError('');
+    try {
+      if (mode === 'login') {
+        const res = await axios.post<LoginResponse>('http://localhost:8080/api/auth/login', {
+          username: values.username,
+          password: values.password,
+        });
+
+        const { accessToken, userEntity } = res.data;
+        const user: User = {
+          email: userEntity.email,
+          username: userEntity.username,
+          role: userEntity.role,
+        };
+
+        const payloadBase64 = accessToken.split('.')[1];
+        const decodedPayload = JSON.parse(atob(payloadBase64));
+        const exp = decodedPayload.exp * 1000;
+
+        login(accessToken, user, exp);
+        navigate('/dashboard');
+      } else {
+        await axios.post('http://localhost:8080/api/auth/register', {
+          username: values.username,
+          password: values.password,
+          email: values.email,
+        });
+
+        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        setMode('login');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('Đã xảy ra lỗi. Vui lòng kiểm tra lại thông tin.');
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <Grid container justifyContent="center" alignItems="center" style={{ minHeight: '100vh' }}>
+      <Container maxWidth="xs">
+        <Box
+          sx={{
+            p: 4,
+            bgcolor: 'white',
+            borderRadius: 2,
+            boxShadow: 2,
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            {mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+          </Typography>
+
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, errors, touched, isSubmitting, handleChange }) => (
+              <Form>
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Username"
+                  name="username"
+                  value={values.username}
+                  onChange={handleChange}
+                  error={touched.username && Boolean(errors.username)}
+                  helperText={touched.username && errors.username}
+                />
+                {mode === 'register' && (
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={values.email}
+                    onChange={handleChange}
+                    error={touched.email && Boolean(errors.email)}
+                    helperText={touched.email && errors.email}
+                  />
+                )}
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  error={touched.password && Boolean(errors.password)}
+                  helperText={touched.password && errors.password}
+                />
+
+                {error && (
+                  <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                    {error}
+                  </Typography>
+                )}
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 3, mb: 2 }}
+                  disabled={isSubmitting}
                 >
-                    <Container component="main" maxWidth="xs">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3, bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
-                            <Typography component="h1" variant="h5">
-                                Login
-                            </Typography>
-                            <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: 1 }}>
-                                <TextField
-                                    variant="outlined"
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    label="username"
-                                    autoFocus
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)} />
-                                <TextField
-                                    variant="outlined"
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    label="Password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)} />
-                                {error && (
-                                    <Typography color="error" variant="body2" align="center">
-                                        {error}
-                                    </Typography>
-                                )}
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    color="primary"
-                                    sx={{ mt: 3, mb: 2 }}
-                                    disabled={loading}
-                                >
-                                    {loading ? <CircularProgress size={24} color="secondary" /> : 'Login'}
-                                </Button>
-                            </form>
-                        </Box>
-                    </Container>
-                </Box>
-            </Grid></>
-    );
+                  {isSubmitting ? (
+                    <CircularProgress size={24} />
+                  ) : mode === 'login' ? (
+                    'Đăng nhập'
+                  ) : (
+                    'Đăng ký'
+                  )}
+                </Button>
+              </Form>
+            )}
+          </Formik>
+
+          <Typography variant="body2">
+            {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
+            <Link component="button" variant="body2" onClick={toggleMode}>
+              {mode === 'login' ? 'Đăng ký' : 'Đăng nhập'}
+            </Link>
+          </Typography>
+        </Box>
+      </Container>
+    </Grid>
+  );
 };
 
 export default Login;

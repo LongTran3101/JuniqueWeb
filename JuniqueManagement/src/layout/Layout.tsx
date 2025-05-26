@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Toolbar } from '@mui/material';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -8,7 +8,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [isTopbarVisible, setIsTopbarVisible] = useState(true); // Or however you determine Topbar visibility
+  const [isTopbarVisible] = useState(true); // Or however you determine Topbar visibility
 
 
 
