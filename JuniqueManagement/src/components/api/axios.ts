@@ -4,64 +4,62 @@ const baseURL = 'http://localhost:8080/api';
 
 const axiosInstance = axios.create({
   baseURL,
-  headers:{'Content-Type':'application/json'},
+  headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
-axiosInstance.interceptors.request.use(config => {
+
+axiosInstance.interceptors.request.use(async (config) => {
   const token = localStorage.getItem('accessToken');
-  console.log("token axiosInstance  ",token);
+  console.log("token axiosInstance  ", token);
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    const expireDateStr = localStorage.getItem('expireDate');
+    if (!expireDateStr || expireDateStr.trim() === "" || Number.isNaN(parseInt(expireDateStr, 10))) {
+      return config;
+    }
+    const expireTime = parseInt(expireDateStr, 10);
+    if (Date.now() > expireTime) {
+      try {
+        const res = await axios.post(
+          'http://localhost:8080/api/auth/refresh',
+          {},
+          {
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+
+        if (res.status === 200) {
+          const newToken = res.data.accessToken;
+          let newExp = 0;
+          try {
+            const payloadBase64 = newToken.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payloadBase64));
+            newExp = decodedPayload.exp * 1000;
+          } catch {
+            newExp = Date.now() + 60 * 1000;
+          }
+          // Custom login function (you may replace this with your logic)
+          localStorage.setItem('accessToken', token);
+          localStorage.setItem('expireDate', newExp.toString());
+
+          // Update token in header
+          config.headers.Authorization = `Bearer ${newToken}`;
+        } else {
+          throw new Error("Refresh failed");
+        }
+      } catch (err) {
+        console.error("Refresh token failed", err);
+        // Optional: redirect to login or logout user
+        return Promise.reject(err);
+      }
+    } else {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+
   return config;
 });
 
-// axiosInstance.interceptors.response.use(
-//   res => res,
-//   async err => {
-//     const originalRequest = err.config;
 
-//     if (err.response?.status === 401 && !originalRequest._retry) {
-//       if (isRefreshing) {
-//         return new Promise((resolve, reject) => {
-//           failedQueue.push({ resolve, reject });
-//         })
-//           .then((token: string) => {
-//             originalRequest.headers['Authorization'] = 'Bearer ' + token;
-//             return axiosInstance(originalRequest);
-//           })
-//           .catch(Promise.reject);
-//       }
-
-//       originalRequest._retry = true;
-//       isRefreshing = true;
-
-//       try {
-
-//         console.log("goi refresh ");
-//         const response = await axios.post(`${baseURL}/auth/refresh`, {}, {
-//           withCredentials: true
-//         });
-//          console.log("goi refresh " , response);
-//         const newToken = response.data.accessToken;
-
-//         localStorage.setItem('accessToken', newToken);
-//         axiosInstance.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
-//         processQueue(null, newToken);
-
-//         return axiosInstance(originalRequest);
-//       } catch (err) {
-//         processQueue(err, null);
-//         localStorage.removeItem('accessToken');
-//         window.location.href = '/login';
-//         return Promise.reject(err);
-//       } finally {
-//         isRefreshing = false;
-//       }
-//     }
-
-//     return Promise.reject(err);
-//   }
-// );
 
 export default axiosInstance;

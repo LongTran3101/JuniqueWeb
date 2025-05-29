@@ -40,7 +40,7 @@ const Topbar = () => {
 
         
         <AppBar
-            position="fixed"
+            position="relative"
             elevation={1}
             sx={{
                 bgcolor: '#ffffff',
