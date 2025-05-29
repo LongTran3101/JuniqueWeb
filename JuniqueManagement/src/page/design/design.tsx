@@ -182,7 +182,7 @@ const Design: React.FC = () => {
 
     return (
         <Box p={3}>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Design List
             </Typography>
 

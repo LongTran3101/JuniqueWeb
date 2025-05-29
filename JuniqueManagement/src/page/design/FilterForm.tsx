@@ -25,6 +25,7 @@ const FilterForm: React.FC<FilterFormProps> = React.memo(({ onApplyFilters }) =>
                 <Grid size={4}>
                     <TextField
                         fullWidth
+                        size="small"
                         label="Username"
                         value={filters.username}
                         onChange={(e) => handleChange("username", e.target.value)}
@@ -33,6 +34,7 @@ const FilterForm: React.FC<FilterFormProps> = React.memo(({ onApplyFilters }) =>
                 <Grid size={4}>
                     <TextField
                         fullWidth
+                        size="small"
                         label="email"
                         value={filters.email}
                         onChange={(e) => handleChange("email", e.target.value)}
@@ -42,7 +44,17 @@ const FilterForm: React.FC<FilterFormProps> = React.memo(({ onApplyFilters }) =>
             <Box textAlign="right" paddingTop={2}>
                 <Button
                     variant="outlined"
-                    sx={{ borderRadius: 2, px: 4, border: "1px solid #800080", color: "#800080" }}
+                    color="primary"
+                    sx={{
+                        borderRadius: 2,
+                        px: 4,
+                        borderColor: '#673ab7', // Màu giống hình 1
+                        color: '#673ab7', // Màu chữ giống hình 1
+                        '&:hover': {
+                            borderColor: '#673ab7', // Màu border khi hover
+                            backgroundColor: '#ede7f6', // Màu background khi hover (tùy chọn)
+                        },
+                    }}
                     onClick={handleSearchClick}
                 >
                     Tìm kiếm
